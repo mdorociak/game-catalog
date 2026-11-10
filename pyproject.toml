@@ -1,0 +1,22 @@
+[project]
+name = "game-catalog"
+version = "0.1.0"
+description = "Steam video game catalog"
+readme = "README.md"
+authors = [
+    { name = "lz", email = "ma.dorociak@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "django>=5.2.8,<5.3",
+    "django-filter>=26.2",
+    "djangorestframework>=3.18.3",
+    "psycopg[binary]>=3.3.8",
+    "python-dotenv>=1.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "pytest-django>=4.14.0",
+]
