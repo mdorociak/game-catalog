@@ -56,6 +56,7 @@ class Game(models.Model):
     def is_free(self):
         return self.price is not None and self.price == 0
 
+# No separate index: unique_game_tag (game, tag) already covers lookups by game.
 
 class GameTag(models.Model):
     game = models.ForeignKey(
