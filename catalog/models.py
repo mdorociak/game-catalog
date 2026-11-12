@@ -59,7 +59,10 @@ class Game(models.Model):
 
 class GameTag(models.Model):
     game = models.ForeignKey(
-        Game, on_delete=models.CASCADE, related_name="game_tags"
+        Game, 
+        on_delete=models.CASCADE, 
+        related_name="game_tags",
+        db_index=False
     )
     tag = models.ForeignKey(Tag, on_delete=models.PROTECT)
     votes = models.PositiveIntegerField(default=0)
@@ -81,6 +84,7 @@ class WishlistItem(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="wishlist_items",
+        db_index=False
     )
     game = models.ForeignKey(Game, on_delete=models.PROTECT)
     added_at = models.DateTimeField(auto_now_add=True)
