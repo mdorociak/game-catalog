@@ -1,20 +1,33 @@
 from django.db.models import Count, Prefetch
 from rest_framework import mixins, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from .filters import GameFilter
 from .models import Category, Game, GameTag, Genre, Tag
-from .serializers import GameDetailSerializer, GameListSerializer, LookupSerializer
+from .serializers import (
+    GameDetailSerializer,
+    GameListSerializer,
+    LookupSerializer,
+    SimilarGameSerializer,
+)
+
+SIMILAR_DEFAULT_LIMIT = 10
+SIMILAR_MAX_LIMIT = 50
 
 
 class GameViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Game.objects.all()
     lookup_value_regex = r"\d+" 
     filterset_class = GameFilter
-    search_fields = ["name"] 
+    search_fields = ["name"]  
     ordering_fields = ["name", "release_date", "price", "positive"]
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        if self.action == "similar":
+            return queryset
         if self.action == "retrieve":
             return queryset.prefetch_related(
                 "genres",
@@ -26,7 +39,37 @@ class GameViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return GameDetailSerializer
+        if self.action == "similar":
+            return SimilarGameSerializer
         return GameListSerializer
+
+    @action(detail=True)
+    def similar(self, request, pk=None):
+        limit = self._similar_limit(request)
+        game = self.get_object()  
+
+        similar = (
+            Game.objects
+            .filter(tags__in=game.game_tags.values("tag"))
+            .exclude(pk=game.pk)
+            .annotate(shared_tags=Count("tags"))
+            .order_by("-shared_tags", "-positive", "appid")
+            .prefetch_related("genres")[:limit]
+        )
+        return Response(self.get_serializer(similar, many=True).data)
+
+    @staticmethod
+    def _similar_limit(request):
+        raw = request.query_params.get("limit")
+        if raw is None:
+            return SIMILAR_DEFAULT_LIMIT
+        try:
+            limit = int(raw)
+        except ValueError:
+            limit = 0
+        if limit < 1:
+            raise ValidationError({"limit": ["Must be a positive whole number."]})
+        return min(limit, SIMILAR_MAX_LIMIT)
 
 
 def _with_game_count(model):

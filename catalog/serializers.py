@@ -31,6 +31,13 @@ class GameDetailSerializer(GameListSerializer):
         fields = GameListSerializer.Meta.fields + ["required_age", "categories", "tags"]
 
 
+class SimilarGameSerializer(GameListSerializer):
+    shared_tags = serializers.IntegerField(read_only=True)
+
+    class Meta(GameListSerializer.Meta):
+        fields = GameListSerializer.Meta.fields + ["shared_tags"]
+
+
 class LookupSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(read_only=True)
