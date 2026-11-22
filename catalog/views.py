@@ -1,16 +1,20 @@
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Prefetch
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .filters import GameFilter
-from .models import Category, Game, GameTag, Genre, Tag
+from .models import Category, Game, GameTag, Genre, Tag, WishlistItem
 from .serializers import (
+    DUPLICATE_WISHLIST_MESSAGE,
     GameDetailSerializer,
     GameListSerializer,
     LookupSerializer,
     SimilarGameSerializer,
+    WishlistItemSerializer,
 )
 
 SIMILAR_DEFAULT_LIMIT = 10
@@ -19,7 +23,7 @@ SIMILAR_MAX_LIMIT = 50
 
 class GameViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Game.objects.all()
-    lookup_value_regex = r"\d+" 
+    lookup_value_regex = r"\d+"  
     filterset_class = GameFilter
     search_fields = ["name"]  
     ordering_fields = ["name", "release_date", "price", "positive"]
@@ -90,3 +94,27 @@ class CategoryViewSet(LookupViewSet):
 
 class TagViewSet(LookupViewSet):
     queryset = _with_game_count(Tag)
+
+
+class WishlistViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+
+    serializer_class = WishlistItemSerializer
+    permission_classes = [IsAuthenticated]  
+    lookup_value_regex = r"\d+"
+    pagination_class = None
+    filter_backends = [] 
+
+    def get_queryset(self):
+        return WishlistItem.objects.filter(user=self.request.user).select_related("game")
+
+    def perform_create(self, serializer):
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except IntegrityError:
+            raise ValidationError({"non_field_errors": [DUPLICATE_WISHLIST_MESSAGE]})
