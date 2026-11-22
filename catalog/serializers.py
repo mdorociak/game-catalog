@@ -1,6 +1,9 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
-from .models import Game, GameTag
+from .models import Game, GameTag, WishlistItem
+
+DUPLICATE_WISHLIST_MESSAGE = "This game is already on your wishlist."
 
 
 class GameListSerializer(serializers.ModelSerializer):
@@ -36,6 +39,23 @@ class SimilarGameSerializer(GameListSerializer):
 
     class Meta(GameListSerializer.Meta):
         fields = GameListSerializer.Meta.fields + ["shared_tags"]
+
+
+class WishlistItemSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    game_name = serializers.CharField(source="game.name", read_only=True)
+
+    class Meta:
+        model = WishlistItem
+        fields = ["id", "user", "game", "game_name", "added_at"]
+        read_only_fields = ["added_at"]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=WishlistItem.objects.all(),
+                fields=["user", "game"],
+                message=DUPLICATE_WISHLIST_MESSAGE,
+            ),
+        ]
 
 
 class LookupSerializer(serializers.Serializer):
