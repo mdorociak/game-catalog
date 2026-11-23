@@ -1,0 +1,10 @@
+.git
+.venv
+venv
+.env
+__pycache__
+*.pyc
+.pytest_cache
+.DS_Store
+db.sqlite3
+data/*.csv
