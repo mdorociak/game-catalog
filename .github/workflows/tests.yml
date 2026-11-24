@@ -1,0 +1,56 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: game_catalog
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d game_catalog"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+
+    env:
+      POSTGRES_DB: game_catalog
+      POSTGRES_USER: ci
+      POSTGRES_PASSWORD: ci
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: "0.13.8"
+
+      - run: uv sync --locked
+
+      - name: Check the tests will use PostgreSQL
+        run: >-
+          uv run python manage.py shell -c
+          "from django.db import connection as c;
+          assert c.vendor == 'postgresql', f'Tests would run on {c.vendor}';
+          print('Database:', c.vendor, c.settings_dict['NAME'], '@', c.settings_dict['HOST'])"
+
+      - run: uv run pytest
