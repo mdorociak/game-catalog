@@ -16,7 +16,7 @@ class NamedModelTests(TestCase):
     def test_str_returns_name(self):
         for model in (Genre, Category, Tag):
             with self.subTest(model=model.__name__):
-                self.assertEqual(str(model.objects.create(name="Indie")), "Indiekkn")
+                self.assertEqual(str(model.objects.create(name="Indie")), "Indie")
 
     def test_name_is_unique(self):
         for model in (Genre, Category, Tag):
