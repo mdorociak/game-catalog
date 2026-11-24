@@ -14,12 +14,12 @@ def _has_name(link_model, relation, value):
 
 
 class GameFilter(filters.FilterSet):
-    genre = filters.CharFilter(method="filter_genre")
-    category = filters.CharFilter(method="filter_category")
-    tag = filters.CharFilter(method="filter_tag")
+    genre = filters.CharFilter(method="filter_genre", label="Genre")
+    category = filters.CharFilter(method="filter_category", label="Category")
+    tag = filters.CharFilter(method="filter_tag", label="Tag")
     min_price = filters.NumberFilter(field_name="price", lookup_expr="gte")
     max_price = filters.NumberFilter(field_name="price", lookup_expr="lte")
-    is_free = filters.BooleanFilter(method="filter_is_free")
+    is_free = filters.BooleanFilter(method="filter_is_free", label="Is free")
     released_after = filters.DateFilter(field_name="release_date", lookup_expr="gte")
     released_before = filters.DateFilter(field_name="release_date", lookup_expr="lte")
 

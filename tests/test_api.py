@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from catalog.filters import GameFilter
 from catalog.models import Game, Genre
 from tests.factories import make_game
 
@@ -240,3 +241,14 @@ def test_detail_needs_at_most_5_queries(api, many_games, django_assert_max_num_q
 def test_lookups_need_2_queries(api, many_games, django_assert_num_queries, url):
     with django_assert_num_queries(2): 
         api.get(url)
+
+
+def test_filter_form_labels_are_readable(api):
+    labels = {name: str(field.label) for name, field in GameFilter().form.fields.items()}
+    assert labels["genre"] == "Genre"
+    assert labels["category"] == "Category"
+    assert labels["tag"] == "Tag"
+    assert labels["is_free"] == "Is free"
+
+    page = api.get("/api/games/", HTTP_ACCEPT="text/html").content.decode()
+    assert "[invalid name]" not in page
