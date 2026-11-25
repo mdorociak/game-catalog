@@ -71,8 +71,8 @@ Game list parameters:
 | `search` | `?search=hollow` | Part of the name |
 | `ordering` | `?ordering=-positive` | `name`, `release_date`, `price`, `positive`; prefix `-` for descending |
 
-Example — games similar to Hades. The response is a plain list; one item
-shown, values depend on the imported data:
+Example — games similar to Hades, from a full import. The response is a plain
+list; the first of three items shown:
 
 ```bash
 curl "http://localhost:8000/api/games/1145360/similar/?limit=3"
@@ -81,18 +81,20 @@ curl "http://localhost:8000/api/games/1145360/similar/?limit=3"
 ```json
 [
   {
-    "appid": 2379780,
-    "name": "Balatro",
-    "release_date": "2024-02-20",
-    "price": "14.99",
+    "appid": 1145350,
+    "name": "Hades II",
+    "release_date": "2025-09-25",
+    "price": "29.99",
     "is_free": false,
-    "positive": 150000,
-    "negative": 3000,
-    "genres": ["Casual", "Indie", "Strategy"],
-    "shared_tags": 2
+    "positive": 60844,
+    "negative": 3288,
+    "genres": ["Action", "Indie", "RPG"],
+    "shared_tags": 17
   }
 ]
 ```
+
+The next two are SWORN (16 shared tags) and Dreamscaper (15).
 
 ## Design notes
 
@@ -147,10 +149,17 @@ back to SQLite.
 
 ## Import performance
 
-| Version | Time for the full file |
+Full file: 23,505 games and about 306,000 tag links, imported in batches of
+1,000 inside one transaction. Measured on PostgreSQL 16 in Docker on a Mac.
+
+| Run | Time |
 | --- | --- |
-| One `update_or_create` per game | TODO |
-| Batched `bulk_create` in one transaction | TODO |
+| First import into an empty database | ~8 s |
+| Re-import of the same file | 8–9 s |
+
+A re-import costs about as much as the first one: every batch deletes and
+re-inserts its links, and PostgreSQL keeps the deleted rows as dead tuples until
+autovacuum cleans them up. Updating only the links that changed would write less.
 
 ## Project layout
 
