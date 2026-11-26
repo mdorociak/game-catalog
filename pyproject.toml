@@ -8,9 +8,12 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
+    "anthropic>=2.14.0",
     "django>=5.2.8,<5.3",
     "django-filter>=26.2",
     "djangorestframework>=3.18.3",
+    "httpx>=0.29.0",
+    "mcp[cli]>=2.3.0",
     "psycopg[binary]>=3.3.8",
     "python-dotenv>=1.2.4",
 ]
